@@ -81,3 +81,243 @@ Cet atelier, **noté sur 20 points**, est évalué sur la base du barème suivan
 - Degré d'automatisation du projet (utilisation de Makefile ? script ? ...) (4 points)
 - Qualité du Readme (lisibilité, erreur, ...) (4 points)
 - Processus travail (quantité de commits, cohérence globale, interventions externes, ...) (4 points) 
+
+---------------------------------------------------
+## Ma Solution
+---------------------------------------------------
+
+### Ce que j'ai construit
+
+Une architecture API-driven complète :
+Requête HTTP → API Gateway → Lambda → EC2 (start/stop)
+
+### Étapes réalisées
+
+**1. Création de l'instance EC2**
+```python
+# Créer une instance EC2 dans LocalStack
+ec2 = boto3.client('ec2', endpoint_url='http://localhost:4566', region_name='us-east-1', aws_access_key_id='test', aws_secret_access_key='test')
+ec2.run_instances(ImageId='ami-07b643b5e45e', InstanceType='t2.micro', MinCount=1, MaxCount=1)
+# Instance créée : i-f5a5df153f11d2641
+```
+
+**2. Création de la fonction Lambda**
+
+La Lambda reçoit l'action (`start` ou `stop`) et pilote l'instance EC2 :
+```python
+def lambda_handler(event, context):
+    body = json.loads(event.get('body', '{}'))
+    instance_id = body.get('instance_id')
+    action = body.get('action')
+    if action == "start":
+        ec2.start_instances(InstanceIds=[instance_id])
+        return {"statusCode": 200, "body": json.dumps({"message": f"Instance {instance_id} démarrée"})}
+    elif action == "stop":
+        ec2.stop_instances(InstanceIds=[instance_id])
+        return {"statusCode": 200, "body": json.dumps({"message": f"Instance {instance_id} arrêtée"})}
+```
+
+**3. Création de l'API Gateway**
+
+L'API Gateway expose un endpoint HTTP POST `/ec2` connecté à la Lambda.
+
+**4. Ouverture du port 4566**
+
+Dans l'onglet PORTS du Codespace, rendre le port 4566 public pour obtenir l'URL publique.
+
+---
+
+### Comment utiliser la solution
+
+**Arrêter l'instance EC2 :**
+```bash
+curl -X POST "https://bookish-carnival-g4vrq7prjwxwcvqw-4566.app.github.dev/_aws/execute-api/otwmmt3szx/prod/ec2" \
+  -H "Content-Type: application/json" \
+  -d '{"instance_id": "i-f5a5df153f11d2641", "action": "stop"}'
+```
+
+**Démarrer l'instance EC2 :**
+```bash
+curl -X POST "https://bookish-carnival-g4vrq7prjwxwcvqw-4566.app.github.dev/_aws/execute-api/otwmmt3szx/prod/ec2" \
+  -H "Content-Type: application/json" \
+  -d '{"instance_id": "i-f5a5df153f11d2641", "action": "start"}'
+```
+
+**Réponses attendues :**
+```json
+{"message": "Instance i-f5a5df153f11d2641 arrêtée"}
+{"message": "Instance i-f5a5df153f11d2641 démarrée"}
+```
+
+---
+
+### Points importants
+
+- L'URL publique du port 4566 change à chaque redémarrage du Codespace
+- LocalStack ne persiste pas après redémarrage — recréer EC2, Lambda et API Gateway
+- La Lambda utilise `172.17.0.1:4566` au lieu de `localhost:4566` car elle tourne dans Docker
+
+
+---------------------------------------------------
+## Ma Solution
+---------------------------------------------------
+
+### Ce que j'ai construit
+
+Une architecture API-driven complète : Requête HTTP → API Gateway → Lambda → EC2 (start/stop) ### Étapes réalisées
+
+**1. Création de l'instance EC2**
+
+Création d'une instance EC2 simulée dans LocalStack avec boto3 :
+- ImageId : ami-07b643b5e45e (Amazon Linux 2)
+- InstanceType : t2.micro
+- Instance créée : i-f5a5df153f11d2641
+
+**2. Création de la fonction Lambda**
+
+La Lambda reçoit l'action (start ou stop) et pilote l'instance EC2.
+Elle retourne une réponse au format attendu par API Gateway :
+- statusCode
+- headers
+- body
+
+**3. Création de l'API Gateway**
+
+L'API Gateway expose un endpoint HTTP POST /ec2 connecté à la Lambda.
+API ID : otwmmt3szx
+Endpoint : /_aws/execute-api/otwmmt3szx/prod/ec2
+
+**4. Ouverture du port 4566**
+
+Dans l'onglet PORTS du Codespace, le port 4566 est rendu public.
+URL publique : https://bookish-carnival-g4vrq7prjwxwcvqw-4566.app.github.dev
+
+---
+
+### Comment utiliser la solution
+
+**Arrêter l'instance EC2 :**
+
+curl -X POST "https://bookish-carnival-g4vrq7prjwxwcvqw-4566.app.github.dev/_aws/execute-api/otwmmt3szx/prod/ec2" -H "Content-Type: application/json" -d '{"instance_id": "i-f5a5df153f11d2641", "action": "stop"}'
+
+**Démarrer l'instance EC2 :**
+
+curl -X POST "https://bookish-carnival-g4vrq7prjwxwcvqw-4566.app.github.dev/_aws/execute-api/otwmmt3szx/prod/ec2" -H "Content-Type: application/json" -d '{"instance_id": "i-f5a5df153f11d2641", "action": "start"}'
+
+**Réponses attendues :**
+
+Stop  : {"message": "Instance i-f5a5df153f11d2641 arrêtée"}
+Start : {"message": "Instance i-f5a5df153f11d2641 démarrée"}
+
+---
+
+### Points importants
+
+- L'URL publique du port 4566 change à chaque redémarrage du Codespace
+**4. Ouverture du port 4566**
+
+Dans l'onglet PORTS du Codespace, le port 4566 est rendu public.
+URL publique : https://bookish-carnival-g4vrq7prjwxwcvqw-4566.app.github.dev
+
+---
+
+### Comment utiliser la solution
+
+**Arrêter l'instance EC2 :**
+
+curl -X POST "https://bookish-carnival-g4vrq7prjwxwcvqw-4566.app.github.dev/_aws/execute-api/otwmmt3szx/prod/ec2" -H "Content-Type: application/json" -d '{"instance_id": "i-f5a5df153f11d2641", "action": "stop"}'
+
+**Démarrer l'instance EC2 :**
+
+curl -X POST "https://bookish-carnival-g4vrq7prjwxwcvqw-4566.app.github.dev/_aws/execute-api/otwmmt3szx/prod/ec2" -H "Content-Type: application/json" -d '{"instance_id": "i-f5a5df153f11d2641", "action": "start"}'
+
+**Réponses attendues :**
+
+Stop  : {"message": "Instance i-f5a5df153f11d2641 arrêtée"}
+Start : {"message": "Instance i-f5a5df153f11d2641 démarrée"}
+
+---
+
+### Points importants
+
+- L'URL publique du port 4566 change à chaque redémarrage du Codespace
+- LocalStack ne persiste pas après redémarrage
+- La Lambda utilise 172.17.0.1:4566 au lieu de localhost:4566 car elle tourne dans Docker
+
+---
+
+### Auteur
+
+Salouaf - Atelier API-Driven Infrastructure
+
+
+
+---------------------------------------------------
+## Ma Solution
+---------------------------------------------------
+
+### Ce que j'ai construit
+
+Une architecture API-driven complete :
+
+Requete HTTP -> API Gateway -> Lambda -> EC2 (start/stop)
+
+### Etapes realisees
+
+**1. Creation de l'instance EC2**
+
+Creation d'une instance EC2 simulee dans LocalStack avec boto3 :
+- ImageId : ami-07b643b5e45e (Amazon Linux 2)
+- InstanceType : t2.micro
+- Instance creee : i-f5a5df153f11d2641
+
+**2. Creation de la fonction Lambda**
+
+La Lambda recoit l'action (start ou stop) et pilote l'instance EC2.
+Elle retourne une reponse au format attendu par API Gateway :
+- statusCode
+- headers
+- body
+
+**3. Creation de l'API Gateway**
+
+L'API Gateway expose un endpoint HTTP POST /ec2 connecte a la Lambda.
+API ID : otwmmt3szx
+Endpoint : /_aws/execute-api/otwmmt3szx/prod/ec2
+
+**4. Ouverture du port 4566**
+
+Dans l'onglet PORTS du Codespace, le port 4566 est rendu public.
+URL publique : https://bookish-carnival-g4vrq7prjwxwcvqw-4566.app.github.dev
+
+---
+
+### Comment utiliser la solution
+
+**Arreter l'instance EC2 :**
+
+curl -X POST "https://bookish-carnival-g4vrq7prjwxwcvqw-4566.app.github.dev/_aws/execute-api/otwmmt3szx/prod/ec2" -H "Content-Type: application/json" -d '{"instance_id": "i-f5a5df153f11d2641", "action": "stop"}'
+
+**Demarrer l'instance EC2 :**
+
+curl -X POST "https://bookish-carnival-g4vrq7prjwxwcvqw-4566.app.github.dev/_aws/execute-api/otwmmt3szx/prod/ec2" -H "Content-Type: application/json" -d '{"instance_id": "i-f5a5df153f11d2641", "action": "start"}'
+
+**Reponses attendues :**
+
+Stop  : {"message": "Instance i-f5a5df153f11d2641 arretee"}
+Start : {"message": "Instance i-f5a5df153f11d2641 demarree"}
+
+---
+
+### Points importants
+
+- L'URL publique du port 4566 change a chaque redemarrage du Codespace
+- LocalStack ne persiste pas apres redemarrage
+- La Lambda utilise 172.17.0.1:4566 au lieu de localhost:4566 car elle tourne dans Docker
+
+---
+
+### Auteur
+
+Salouaf - Atelier API-Driven Infrastructure
+
